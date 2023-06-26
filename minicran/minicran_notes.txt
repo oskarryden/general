@@ -1,4 +1,0 @@
-# MiniCRAN
-miniCRAN can be used to create local repositories of dependent packages and is availiable at CRAN.
-
-
