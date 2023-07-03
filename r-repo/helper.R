@@ -23,7 +23,9 @@ prune_base_r_packages <- function(x) {
 }
 
 # View DESCRIPTION file of a {package} in {directory}
-# TODO: Update this function to use {utils::packageDescription}
-show_package_description <- function(package, directory) {
-
+show_package_description <- function(package, library) {
+    doc <- utils::packageDescription(package, lib.loc = library)
+    fields <- c("Package", "Version", "Depends", "Imports", "Suggests", "SystemRequirements", "Repository", "Date/Publication", "Built")
+    doc[names(doc) %in% fields]
 }
+
