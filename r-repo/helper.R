@@ -1,3 +1,24 @@
+# Print the R version
+print_r_version <- function() {
+    message(sprintf("R version: [%s].", getRversion()))
+}
+
+# Print the R repository
+print_r_repository <- function() {
+    message(sprintf("R repository: [%s].", toString(getOption("repos"))))
+}
+
+# Print the R library
+print_r_library <- function() {
+    message(sprintf("R library [n:%i]: [%s].",
+        length(.libPaths()), toString(.libPaths())))
+}
+
+get_base_r_packages <- function(){
+    sort(rownames(installed.packages(priority="base")))
+}
+
+
 # Helper for {show_package_description}
 .capture_description_field <- function(pattern, description_file) {
     sidx <- grep(sprintf("^%s:", pattern), description_file)
