@@ -22,8 +22,18 @@ prune_base_r_packages <- function(x) {
     x[!x %in% get_base_r_packages()]
 }
 
-# View DESCRIPTION file of a {package} in {directory}
+read_vp_object <- function(path) {
+    vp <- readRDS(path)
+    stopifnot(check_vp_object(vp))
+    return(vp)
+}
+
 show_package_description <- function(package, library) {
+
+    if (missing(library)) {
+        library <- .libPaths()[1]
+    }
+
     doc <- utils::packageDescription(package, lib.loc = library)
     fields <- c("Package", "Version", "Depends", "Imports", "Suggests", "SystemRequirements", "Repository", "Date/Publication", "Built")
     doc[names(doc) %in% fields]

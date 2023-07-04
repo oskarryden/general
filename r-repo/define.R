@@ -1,5 +1,5 @@
 # Purpose: Functions to define main external R packages for project
-# Definitions: `Main packages` are those packages that define the starting node for tracking dependencies. `External` are those packages that are reachable via the CRAN repository (TODO: Add other repositories?) Thus, `internal` packages  are those packages that are created and maintained by the project itself.
+# Definitions: `Main packages` are those packages that define the starting node for tracking dependencies. `External` are those packages that are reachable via the CRAN repository (TODO: Add other repositories?) Thus, 'internal' packages  are those packages that are created and maintained by the project itself.
 
 # function: add_main_packages
 add_main_packages <- function(vp, packages, repos) {
@@ -11,6 +11,7 @@ add_main_packages <- function(vp, packages, repos) {
         stop("No packages specified.")
     } else {
         check_packages_vector(packages)
+        message(sprintf("Adding [%s] packages", toString(packages)))
     }
 
     # Add packages to main slot
@@ -19,14 +20,11 @@ add_main_packages <- function(vp, packages, repos) {
     # Add packages to total slot
     vp$total <- sort(append(x = vp$total, values = packages))
 
-    # Add base R packages as memory
-    vp$base_r <- get_base_r_packages()
-
     # Return updated object
     stopifnot(check_vp_object(vp))
+    message("Finished adding main packages.")
     return(vp)
 }
-
 
 # function: get_available_packages
 get_available_packages <- function() {
@@ -34,7 +32,7 @@ get_available_packages <- function() {
     # Check filters
     if (is.null(getOption("available_packages_filters"))) {
         warning("No filters for packages are set.")
-        message("Consider setting filters using `options(available_packages_filters = c(\"R_version\", \"OS_type\", \"subarch\", \"duplicates\"))` before running `get_available_packages`.")
+        message("Consider setting filters using `options(available_packages_filters = c(\"R_version\", \"OS_type\", \"subarch\", \"CRAN\", \"duplicates\"))` before running `get_available_packages`.")
     } else {
         message("Filters for packages are set.")
         message(sprintf("Filters: [%s].", toString(getOption("available_packages_filters"))))

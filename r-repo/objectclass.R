@@ -3,136 +3,36 @@
 
 # function: make_vp_object 
 make_vp_object <- function() {
+    message("Initiating a 'vpackages' object.")
     init <- list()
+
+    # Adding slots for package names
     init$main <- vector(mode = "character", length = 0)
     init$deps <- list()
     init$total <- vector(mode = "character", length = 0)
 
+    # Adding available packages
+    init$available_packages <- get_available_packages()
+    stopifnot(check_available_packages(init$available_packages))
+
+    # Adding information about the R configuration
+    settings <- list()
+    settings$r_version <- getRversion()
+    settings$base_r <- get_base_r_packages()
+    settings$system_info <- Sys.info()[c("sysname", "release", "version", "machine", "user", "nodename")]
+    settings$repos <- getOption("repos")
+    settings$lib_paths <- .libPaths()
+    settings$start_date <- Sys.Date()
+    
+    # Place in init object
+    init$settings <- settings
+
     out <- init
     class(out) <- append(x = class(init), values = "vpackages")
+
+    # Check the `out` object.
+    stopifnot(check_vp_object(out))
+
     return(out)
 }
-
-check_vp_object <- function(x) {
-    if (!"vpackages" %in% class(x)) {
-        stop("x is not a 'vpackages' object.")
-    }
-    if (!"list" %in% class(x)) {
-        stop("x is not a list.")
-    }
-    if (is.null(x$main)) {
-        stop("The main slot is NULL.")
-    }
-    if (!is.character(x$main)) {
-        stop("The main slot is not a character vector.")
-    }
-    if (is.null(x$deps)) {
-        stop("The deps slot is NULL.")
-    }
-    if (!"list" %in% class(x$deps)) {
-        stop("The deps slot is not a list.")
-    }
-    if (is.null(x$total)) {
-        stop("The total slot is NULL.")
-    }
-    if (!is.character(x$total)) {
-        stop("The total slot is not a character vector.")
-    }
-    check_parts_and_total(x)
-
-    return(TRUE)
-}
-
-check_packages_vector <- function(x) {
-    if (!is.character(x)) {
-        stop("x is not a character vector.")
-    }
-    if (length(x) == 0) {
-        stop("x is an empty character vector.")
-    }
-    if (any(duplicated(x))) {
-        stop("x contains duplicated elements.")
-    }
-    if (any(x == "")) {
-        stop("x contains empty strings.")
-    }
-    if (any(grepl("^\\s+$", x))) {
-        stop("x contains strings with only spaces.")
-    }
-
-    if (any(x %in% get_base_r_packages())) {
-        message(sprintf("Do not include packages that are part of base R [%s].", toString(get_base_r_packages())))
-        stop("x contains packages that are part of base R.")
-    }
-
-    if (any(!x %in% suppressMessages(get_available_packages()))) {
-        stop("x contains packages that are not available in any of the specified repositories.")
-    }
-    return(TRUE)
-}
-
-check_available_packages <- function(x) {
-    if (!is.matrix(x)) {
-        stop("x is not a matrix.")
-    }
-    if (nrow(x) == 0) {
-        stop("x is an empty matrix.")
-    }
-    if (!all(c("Package", "Version", "Depends", "Imports") %in% colnames(x))) {
-        stop("x is lacking Package, Version, or Depends.")
-    }
-    return(TRUE)
-}
-
-check_parts_and_total <- function(x) {
-    parts <- unique(c(x[["main"]], unlist(unname(x[["deps"]]))))
-    total <- unique(x[["total"]])
-    if (length(parts) != length(total)) {
-        stop("The sum of the main and dependencies does not equal the total.")
-    }
-    if (any(!parts %in% total)) {
-        stop("The parts are not a subset of the total.")
-    }
-}
-
-check_deps_object <- function(deps){
-    if (!is.list(deps)) {
-        stop("deps is not a list.")
-    }
-    if (length(deps) == 0) {
-        stop("deps is an empty list.")
-    }
-    if (any(duplicated(names(deps)))) {
-        stop("deps contains duplicated names.")
-    }
-    if (any(names(deps) == "")) {
-        stop("deps contains empty strings.")
-    }
-    if (any(grepl("^\\s+$", names(deps)))) {
-        stop("deps contains strings with only spaces.")
-    }
-    if (any(!names(deps) %in% suppressMessages(get_available_packages()))) {
-        stop("deps contains packages that are not available through any of the specified repositories.")
-    }
-    if (any(!sapply(deps, is.character))) {
-        stop("deps contains elements that are not character vectors.")
-    }
-    if (any(sapply(deps, length) == 0)) {
-        stop("deps contains elements that are empty character vectors.")
-    }
-    if (any(sapply(deps, function(x) any(duplicated(x))))) {
-        stop("deps contains elements that are character vectors with duplicated elements.")
-    }
-    if (any(sapply(deps, function(x) any(x == "")))) {
-        stop("deps contains elements that are character vectors with empty strings.")
-    }
-    if (any(sapply(deps, function(x) any(grepl("^\\s+$", x))))) {
-        stop("deps contains elements that are character vectors with strings with only spaces.")
-    }
-    if (any(sapply(deps, function(x) any(!x %in% suppressMessages(get_available_packages()))))) {
-        stop("deps contains elements that are character vectors with packages that are not available through any of the specified repositories.")
-    }
-    return(TRUE)
-}
-
 

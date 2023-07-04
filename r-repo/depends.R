@@ -2,8 +2,7 @@
 # Definitions: Dependencies are defined as those packages that are required for the main packages to function, as given by the package authors of the main package. This includes both `Depends` and `Imports` packages. The chain of dependencies is followed recursively, meaning that the dependencies of the dependencies are also included. The `Suggests` packages are not included in the dependencies. The reverse dependencies, which are packages that depend on the main packages, are also not included in the dependencies. That is, the purpose is to capture the dependencies of the main packages, not the reverse dependencies, aka the upstream dependencies.
 
 # function: add_main_dependencies
-add_main_dependencies <- function(vp, db = get_available_packages(), deps_type = c("Depends", "Imports")
-    ) {
+add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
 
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
@@ -11,11 +10,13 @@ add_main_dependencies <- function(vp, db = get_available_packages(), deps_type =
     packages <- vp[["main"]]
     stopifnot(check_packages_vector(packages))
     # Check the `db` argument.
+    db <- vp[["available_packages"]]
     stopifnot(check_available_packages(db))
     # Check the `dependency_type` argument.
     deps_type <- match.arg(
         arg = deps_type,
-        choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"), several.ok = TRUE)
+        choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"),
+        several.ok = TRUE)
     # Define the main dependencies as {deps} from {packages} that can be found in {db}.
     deps <- tools::package_dependencies(
         packages = packages, 

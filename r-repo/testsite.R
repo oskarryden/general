@@ -1,3 +1,14 @@
+source("general/r-repo/objectclass.R")
+source("general/r-repo/define.R")
+source("general/r-repo/depends.R")
+source("general/r-repo/download.R")
+source("general/r-repo/repository.R")
+source("general/r-repo/helper.R")
+source("general/r-repo/checks.R")
+source("general/r-repo/update.R")
+
+ls()
+
 # Try the function make_vp_object() in the console.
 make_vp_object()
 # class
@@ -27,6 +38,7 @@ dd <- data.frame(); class(dd) <- c(class(dd),"vpackages")
 check_vp_object(dd)
 ll <- list(); class(ll) <- c(class(ll),"vpackages")
 check_vp_object(ll)
+
 # ------------------------------------------------------------------------------
 # Try the function add_main_packages() in the console.
 add_main_packages(make_vp_object())
@@ -40,7 +52,7 @@ check_vp_object(add_main_packages(make_vp_object(), c("ggplot2")))
 check_vp_object(add_main_packages(make_vp_object(), c("ggplot2", "dplyr")))
 
 # Try the get_available_packages() function in the console.
-options(available_packages_filters = c("R_version", "OS_type", "subarch", "duplicates"))
+#options(available_packages_filters = c("R_version", "OS_type", "subarch", "duplicates"))
 get_available_packages() |> invisible()
 get_available_packages("no") |> invisible()
 get_available_packages() |> head()
@@ -59,23 +71,19 @@ add_main_packages(make_vp_object(), c("rstan", "dplyr"))
 # Checkpoint the make_vp_object() + add_main_packages() functions.
 # Create an object from the two functions
 vpob <- make_vp_object()
-vpob <- add_main_packages(vpob, c("data.table", "DBI", "rstan", "ggplot2", "dplyr"))
+vpob <- add_main_packages(vpob, c("vutils", "vbase", "vanalysis","data.table", "DBI", "rstan", "ggplot2", "dplyr"))
 vpob |> str()
 
 # try add_main_dependencies() in the console.
 vpob <- add_main_dependencies(vpob)
-
+str(vpob)
 
 # ------------------------------------------------------------------------------
-create_dir("")
-create_dir(" ")
-create_dir("  ")
-create_dir(dir)
 
-create_dir("test")
-create_dir("test")
-create_dir("test/test/", recursive = FALSE)
-unlink("~/test", recursive = TRUE)
+vpob_down <- download_packages(vpob)
 
-# test download_packages() in the console
-download_packages(vpob, download_dir = "testdeps")
+make_repository(vpob_down, repo_type = "win.binary")
+make_repository(vpob_down, repo_type = "mac.binary")
+vpob_repo <- make_repository(vpob_down, repo_type = "source")
+
+paste0(vpob_repo$settings$repository_destination, "/", vpob_repo$settings$packages_area) |> list.files(pattern = "purrr", full.names = TRUE) |> install.packages(pkgs = _, repos = NULL)

@@ -2,14 +2,12 @@
 # Definitions: The {total} packages are the main packages and their dependencies.
 
 # function: download_packages
-download_packages <- function(vp, download_dir, recursive_dir = FALSE, package_type) {
+download_packages <- function(vp, package_type) {
     
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
-    # Check the recursive argument.
-    stopifnot(is.logical(recursive_dir))
     # Create the download directory.
-    directory_path <- create_dir(download_dir, recursive = recursive_dir)
+    directory_path <- create_dir()
 
     tryCatch({
         # Get the package type.
@@ -17,13 +15,11 @@ download_packages <- function(vp, download_dir, recursive_dir = FALSE, package_t
             package_type <- getOption("pkgType")
         }
         match.arg(arg = package_type, choices = c("source", "win.binary", "mac.binary")) 
-        # Get repos
-
+        vp$settings$package_type <- package_type
+        
         # Populate the {vp} object with the paths to the downloaded packages.
-        vp$destination <- directory_path
-        vp$type <- package_type
-        vp$repos <- getOption("repos")
-
+        vp$settings$destination <- directory_path
+    
         # Check the {vp} object.
         stopifnot(check_vp_object(vp))
 
@@ -32,14 +28,14 @@ download_packages <- function(vp, download_dir, recursive_dir = FALSE, package_t
 
         # Download the packages.
         message(sprintf("Downloading [%i] 'pruned' packages.", length(vp$pruned_pcks)))
-        message(sprintf("Package type: [%s].", vp$type))
-        message(sprintf("Repo(s): [%s].", vp$repos))
-        message(sprintf("Saving to [%s].", vp$destination))
+        message(sprintf("Package type: [%s].", vp$settings$package_type))
+        message(sprintf("Repo(s): [%s].", toString(vp$settings$repos)))
+        message(sprintf("Saving to [%s].", vp$settings$destination))
         utils::download.packages(
             pkgs = vp$pruned_pcks,
-            destdir = vp$destination,
-            type = vp$type,
-            repos = vp$repos,
+            destdir = vp$settings$destination,
+            type = vp$settings$package_type,
+            repos = vp$settings$repos,
             method = "libcurl"
         )
     },  error = function(e) {
@@ -49,34 +45,19 @@ download_packages <- function(vp, download_dir, recursive_dir = FALSE, package_t
     })
 
     # Return the {vp} object.
+    vp$settings$download_date <- Sys.Date()
     return(vp)
 }
 
 # function: create_dir
-# note: places your directory automatically in your home directory; dns '~'.
-create_dir <- function(x, recursive = FALSE) {
+# note: strict function that is quite decisive in what it does.
+create_dir <- function() {
 
-    if (!is.character(x)) {
-        stop("x is not a character vector.")
-    }
-    if (length(x) != 1) {
-        stop("x is not a length 1 character vector.")
-    }
-    if (x == "") {
-        stop("x is an empty string.")
-    }
-    if (grepl("\\s+", x)) {
-        stop("x contains one or more spaces.")
-    }
-    if (grepl("^~", x)) {
-        stop("x starts with a tilde.")
-        }
-
-    # Create .dir
-    .dir <- file.path("~", x)
+    .dir <- file.path("~", paste0(".vpdir-", Sys.Date()))
     if (dir.exists(.dir)) {
-        stop("The directory already exists.")
+        stop(sprintf("This exact directory already exists: %s", .dir))
     }
-    dir.create(.dir, recursive = recursive)
+    dir.create(.dir, recursive = FALSE, showWarnings = TRUE)
+    message(sprintf("Created directory: %s", .dir))
     return(.dir)
 }
