@@ -6,6 +6,8 @@ add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
 
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
+    # Add class 
+    vp <- subclass_has_dependencies(vp)
     # Check the `packages` argument.
     packages <- vp[["main"]]
     stopifnot(check_packages_vector(packages))
@@ -35,7 +37,7 @@ add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
 
     # Update the total packages
     vp[["total"]] <- update_total_packages(vp)
-    
+
     # Return the `vp` object.
     stopifnot(check_vp_object(vp))
     return(vp)

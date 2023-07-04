@@ -137,3 +137,10 @@ check_deps_object <- function(deps){
     }
     return(TRUE)
 }
+
+check_is_repository <- function(x) {
+    if (!"vp_has_repository" %in% class(x)) {
+        stop("x is not a 'vp_has_repository' object.")
+    }
+    return(TRUE)
+}

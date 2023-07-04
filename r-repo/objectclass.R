@@ -27,8 +27,8 @@ make_vp_object <- function() {
     # Place in init object
     init$settings <- settings
 
-    out <- init
-    class(out) <- append(x = class(init), values = "vpackages")
+    # Add class
+    out <- class_vp(init)
 
     # Check the `out` object.
     stopifnot(check_vp_object(out))
@@ -36,3 +36,32 @@ make_vp_object <- function() {
     return(out)
 }
 
+
+class_vp <- function(obj) {
+    stopifnot(!"vpackages" %in% class(obj))
+    class(obj) <- append(x=class(obj), values="vpackages")
+    return(obj)
+}
+
+subclass_has_main <- function(obj) { 
+    stopifnot("vpackages" %in% class(obj))
+    class(obj) <- append(x=class(obj), values="vp_has_main")
+    return(obj)
+}
+subclass_has_dependencies <- function(obj) {
+    stopifnot("vp_has_main" %in% class(obj))
+    class(obj) <- append(x=class(obj), values="vp_has_dependencies")
+    return(obj)
+}
+
+subclass_downloaded <- function(obj) {
+    stopifnot("vp_has_dependencies" %in% class(obj))
+    class(obj) <- append(x=class(obj), values="vp_downloaded")
+    return(obj)
+}
+
+subclass_has_repository <- function(obj) {
+    stopifnot("vp_downloaded" %in% class(obj))
+    class(obj) <- append(x=class(obj), values="vp_has_repository")
+    return(obj)
+}

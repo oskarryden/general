@@ -6,6 +6,8 @@ download_packages <- function(vp, package_type) {
     
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
+    # Add class
+    vp <- subclass_downloaded(vp)
     # Create the download directory.
     directory_path <- create_dir()
 

@@ -7,7 +7,7 @@ source("general/r-repo/helper.R")
 source("general/r-repo/checks.R")
 source("general/r-repo/update.R")
 
-ls()
+lsf.str()
 
 # Try the function make_vp_object() in the console.
 make_vp_object()
@@ -71,19 +71,8 @@ add_main_packages(make_vp_object(), c("rstan", "dplyr"))
 # Checkpoint the make_vp_object() + add_main_packages() functions.
 # Create an object from the two functions
 vpob <- make_vp_object()
-vpob <- add_main_packages(vpob, c("vutils", "vbase", "vanalysis","data.table", "DBI", "rstan", "ggplot2", "dplyr"))
-vpob |> str()
-
-# try add_main_dependencies() in the console.
+vpob <- add_main_packages(vpob, c("data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
 vpob <- add_main_dependencies(vpob)
-str(vpob)
-
-# ------------------------------------------------------------------------------
-
-vpob_down <- download_packages(vpob)
-
-make_repository(vpob_down, repo_type = "win.binary")
-make_repository(vpob_down, repo_type = "mac.binary")
-vpob_repo <- make_repository(vpob_down, repo_type = "source")
-
-paste0(vpob_repo$settings$repository_destination, "/", vpob_repo$settings$packages_area) |> list.files(pattern = "purrr", full.names = TRUE) |> install.packages(pkgs = _, repos = NULL)
+vpob_downloaded <- download_packages(vpob)
+vpob_repository <- make_repository(vpob_downloaded, repo_type = "source")
+vpob_repository |> str()

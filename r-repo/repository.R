@@ -6,6 +6,8 @@ make_repository <- function(vp, repo_type = "source") {
         
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
+    # Add class
+    vp <- subclass_has_repository(vp)
     # Check the `repo_type` argument.
     repo_type <- match.arg(arg = repo_type, choices = c("source", "win.binary", "mac.binary"))
     if (!repo_type == "source") {

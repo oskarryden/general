@@ -6,6 +6,8 @@ add_main_packages <- function(vp, packages, repos) {
 
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
+    # Add class
+    vp <- subclass_has_main(vp)
 
     if (missing(packages)) {
         stop("No packages specified.")
@@ -20,10 +22,13 @@ add_main_packages <- function(vp, packages, repos) {
     # Add packages to total slot
     vp$total <- sort(append(x = vp$total, values = packages))
 
+    # Add class
+    out <- subclass_has_main(vp)
+
     # Return updated object
-    stopifnot(check_vp_object(vp))
+    stopifnot(check_vp_object(out))
     message("Finished adding main packages.")
-    return(vp)
+    return(out)
 }
 
 # function: get_available_packages
