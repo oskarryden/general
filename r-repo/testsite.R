@@ -1,3 +1,5 @@
+R
+setwd("~/oskar_personal_repositories")
 source("general/r-repo/objectclass.R")
 source("general/r-repo/define.R")
 source("general/r-repo/depends.R")
@@ -9,17 +11,21 @@ source("general/r-repo/update.R")
 
 lsf.str()
 
+print_r_library()
+print_r_version()
+print_r_repository()
+
 # Try the function make_vp_object() in the console.
-make_vp_object()
+stopifnot(!is.null(make_vp_object()))
 # class
-class(make_vp_object())
+stopifnot("vpackages" %in% class(make_vp_object()))
 # structure
 str(make_vp_object())
 # length
 length(make_vp_object())
 
 # Try the function check_vp_object() in the console.
-check_vp_object(make_vp_object())
+stopifnot(check_vp_object(make_vp_object()))
 
 check_vp_object(list())
 check_vp_object(list(main = c(), deps = list(), total = c()))
@@ -71,8 +77,18 @@ add_main_packages(make_vp_object(), c("rstan", "dplyr"))
 # Checkpoint the make_vp_object() + add_main_packages() functions.
 # Create an object from the two functions
 vpob <- make_vp_object()
-vpob <- add_main_packages(vpob, c("data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
-vpob <- add_main_dependencies(vpob)
-vpob_downloaded <- download_packages(vpob)
-vpob_repository <- make_repository(vpob_downloaded, repo_type = "source")
+vpob$settings
+
+vpob_main <- add_main_packages(vpob, c("vbase", "data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
+str(vpob_main)
+
+vpob_deps <- add_main_dependencies(vpob_main)
+vpob_deps$deps
+vpob_deps$summary
+
+vpob_downloaded <- download_packages(vpob_deps)
+vpob_downloaded$settings
+
+vpob_repository <- make_repository(vpob_downloaded)
 vpob_repository |> str()
+

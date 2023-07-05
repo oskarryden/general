@@ -1,13 +1,10 @@
-# Purpose: Functions to define main external R packages for project
-# Definitions: `Main packages` are those packages that define the starting node for tracking dependencies. `External` are those packages that are reachable via the CRAN repository (TODO: Add other repositories?) Thus, 'internal' packages  are those packages that are created and maintained by the project itself.
-
 # function: add_main_packages
 add_main_packages <- function(vp, packages, repos) {
 
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
     # Add class
-    vp <- subclass_has_main(vp)
+    vp <- timestamp_vp_class(subclass_has_main(vp))
 
     if (missing(packages)) {
         stop("No packages specified.")
@@ -22,17 +19,14 @@ add_main_packages <- function(vp, packages, repos) {
     # Add packages to total slot
     vp$total <- sort(append(x = vp$total, values = packages))
 
-    # Add class
-    out <- subclass_has_main(vp)
-
     # Return updated object
-    stopifnot(check_vp_object(out))
+    stopifnot(check_vp_object(vp))
     message("Finished adding main packages.")
-    return(out)
+    return(vp)
 }
 
 # function: get_available_packages
-get_available_packages <- function() {
+get_available_packages <- function(vp) {
 
     # Check filters
     if (is.null(getOption("available_packages_filters"))) {
@@ -43,13 +37,21 @@ get_available_packages <- function() {
         message(sprintf("Filters: [%s].", toString(getOption("available_packages_filters"))))
     }
 
-    stopifnot(`Specify repos through options`= !is.null(getOption("repos")))
-    stopifnot(`There should be at least one repo`= length(getOption("repos")) > 0)
+    # Check vp
+    if (!missing(vp)) {
+        stopifnot(check_vp_object(vp))
+        message("Using the available packages from the vp object.")
+        repos <- vp$settings$R$repositories
+    } else {
+        message("Using the available packages from the R repositories.")
+        stopifnot(`Specify repos through options`= !is.null(getOption("repos")))
+        repos <- getOption("repos")
+    }
 
     # Get all packages from {repo_name} available in {repos} with {filters}
-    message(sprintf("Repos used: [%s].", toString(getOption("repos"))))
+    message(sprintf("Repos used: [%s].", toString(repos)))
     cran_packages <- utils::available.packages(
-        repos = getOption("repos"),
+        repos = repos,
         filters = getOption("available_packages_filters")
         )
 

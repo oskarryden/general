@@ -7,44 +7,62 @@ add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
     # Add class 
-    vp <- subclass_has_dependencies(vp)
-    # Check the `packages` argument.
-    packages <- vp[["main"]]
-    stopifnot(check_packages_vector(packages))
+    vp <- timestamp_vp_class(subclass_has_dependencies(vp))
+    # Check main.
+    stopifnot(check_packages_vector(vp[["main"]]))
     # Check the `db` argument.
-    db <- vp[["available_packages"]]
-    stopifnot(check_available_packages(db))
+    stopifnot(check_available_packages(vp[["available_packages"]]))
     # Check the `dependency_type` argument.
     deps_type <- match.arg(
         arg = deps_type,
         choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"),
         several.ok = TRUE)
     # Define the main dependencies as {deps} from {packages} that can be found in {db}.
-    deps <- tools::package_dependencies(
-        packages = packages, 
-        db = db,
+    deps <- get_dependencies(
+        packages = vp[["main"]],
+        db = vp[["available_packages"]],
         which = deps_type,
         recursive = TRUE,
-        reverse = FALSE
-        )   
+        reverse = FALSE) 
     message(sprintf("Found [%i] net dependencies.", length(unlist(deps))))
 
     # Check the {deps} object.
     stopifnot(check_deps_object(deps))
 
-    # Add/replace the dependencies to the `vp` object.
-    vp[["deps"]] <- deps
+    # Add dependencies
+    vp$deps <- deps
 
     # Update the total packages
-    vp[["total"]] <- update_total_packages(vp)
+    vp <- update_total_packages(vp)
+
+    # Summarise dependencies
+    vp <- summarise_packages(vp)
 
     # Return the `vp` object.
     stopifnot(check_vp_object(vp))
     return(vp)
 }
 
+get_dependencies <- function(...) {
+    tools::package_dependencies(...) 
+}
+
+
 update_total_packages <- function(vp) {
     # Update the total packages
-    total <- sort(unique(c(vp[["main"]], unlist(unname(vp[["deps"]])))))
-    return(total)
+    vp$total <- sort(unique(c(vp$main, unlist(unname(vp$deps)))))
+    return(vp)
+}
+
+summarise_packages <- function(vp) {
+
+    stopifnot(check_vp_object(vp))
+
+    vp$summary$packages$n_main <- length(vp$main)
+    vp$summary$packages$n_deps_per_main <- setNames(unlist(lapply(vp$deps, length)), names(vp$deps))
+    vp$summary$packages$n_net_deps <- sum(vp$summary$packages$n_deps_per_main)
+    vp$summary$packages$n_total <- length(vp$total)
+    vp$summary$packages$deps_type <- get("deps_type", envir = as.environment(parent.frame()))
+
+    return(vp)
 }

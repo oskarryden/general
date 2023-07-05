@@ -1,5 +1,3 @@
-# Purpose: Functions to check the `vpackages` workflow.
-
 check_vp_object <- function(x) {
     if (!"vpackages" %in% class(x)) {
         stop("x is not a 'vpackages' object.")
@@ -138,9 +136,49 @@ check_deps_object <- function(deps){
     return(TRUE)
 }
 
-check_is_repository <- function(x) {
-    if (!"vp_has_repository" %in% class(x)) {
-        stop("x is not a 'vp_has_repository' object.")
+check_before_download <- function(x) {
+
+    download_vector <- x$pruned
+
+    if (is.null(download_vector)) {
+        stop("The pruned vector is NULL.")
     }
+
+    if (!is.character(download_vector)) {
+        stop("The pruned vector is not a character vector.")
+    }
+
+    if (length(download_vector) == 0) {
+        stop("The pruned vector is empty. Only base R dependencies are found.")
+    }
+
+    if (is.null(x$summary$download$directory)) {
+        stop("The download directory is NULL.")
+    }
+
+    if (!dir.exists(x$summary$download$directory)) {
+        stop("The download directory does not exist.")
+    }
+
     return(TRUE)
+}
+
+assert_class <- function(x, cond) {
+
+    cond <- switch(
+        cond,
+        "initiated" = "vpackages",
+        "main" = "vp_has_main",
+        "deps" = "vp_has_dependencies",
+        "downloaded" = "vp_is_downloaded",
+        "repository" = "vp_has_repository",
+
+    )
+
+    if (!cond %in% class(x)) {
+        stop("x does not meet the condition.")
+    }
+
+    return(TRUE)
+
 }

@@ -18,14 +18,27 @@ get_base_r_packages <- function(){
     sort(rownames(installed.packages(priority="base")))
 }
 
-prune_base_r_packages <- function(x) {
-    x[!x %in% get_base_r_packages()]
-}
 
 read_vp_object <- function(path) {
     vp <- readRDS(path)
     stopifnot(check_vp_object(vp))
     return(vp)
+}
+
+timestamp_vp_class <- function(obj) {
+    latest_class <- unlist(strsplit(x = class(obj)[length(class(obj))], split = "_"))
+    stopifnot(is.character(latest_class) && is.vector(latest_class))
+    if (latest_class[2] == "vpackages") {
+        stop("The object is already timestamped")
+    }
+    latest_class <- latest_class[length(latest_class)]
+    if (is.null(obj$settings$general[[latest_class]])) {
+        obj$settings$general[[latest_class]] <- Sys.Date()
+    } else {
+        obj$settings$general[[latest_class]] <-
+            c(obj$settings$general[[latest_class]], Sys.Date())
+    }
+    return(obj)
 }
 
 show_package_description <- function(package, library) {
