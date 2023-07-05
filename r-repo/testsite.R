@@ -1,5 +1,6 @@
 R
-setwd("~/oskar_personal_repositories")
+if (Sys.getenv("USER") == "parrot") setwd("~/oskar_personal_repositories")
+if (Sys.getenv("USER") == "oskar") setwd("~/code")
 source("general/r-repo/objectclass.R")
 source("general/r-repo/define.R")
 source("general/r-repo/depends.R")
@@ -77,18 +78,21 @@ add_main_packages(make_vp_object(), c("rstan", "dplyr"))
 # Checkpoint the make_vp_object() + add_main_packages() functions.
 # Create an object from the two functions
 vpob <- make_vp_object()
-vpob$settings
+str(vpob)
 
-vpob_main <- add_main_packages(vpob, c("vbase", "data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
+vpob_main <- add_main_packages(vpob, c("data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
 str(vpob_main)
+vpob$packages$deps_type
 
 vpob_deps <- add_main_dependencies(vpob_main)
-vpob_deps$deps
-vpob_deps$summary
+str(vpob_deps)
 
 vpob_downloaded <- download_packages(vpob_deps)
-vpob_downloaded$settings
+str(vpob_downloaded)
+class(vpob_downloaded)
 
 vpob_repository <- make_repository(vpob_downloaded)
-vpob_repository |> str()
+str(vpob_repository)
+class(vpob_repository)
 
+vp <- vpob_repository

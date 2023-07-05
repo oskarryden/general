@@ -1,35 +1,38 @@
 check_vp_object <- function(x) {
+
+    packages <- x$packages
+
     if (!"vpackages" %in% class(x)) {
         stop("x is not a 'vpackages' object.")
     }
     if (!"list" %in% class(x)) {
         stop("x is not a list.")
     }
-    if (is.null(x$main)) {
+    if (is.null(packages$main)) {
         stop("The main slot is NULL.")
     }
-    if (!is.character(x$main)) {
+    if (!is.character(packages$main)) {
         stop("The main slot is not a character vector.")
     }
-    if (is.null(x$deps)) {
+    if (is.null(packages$deps)) {
         stop("The deps slot is NULL.")
     }
-    if (!"list" %in% class(x$deps)) {
+    if (!"list" %in% class(packages$deps)) {
         stop("The deps slot is not a list.")
     }
-    if (is.null(x$total)) {
+    if (is.null(packages$total)) {
         stop("The total slot is NULL.")
     }
-    if (!is.character(x$total)) {
+    if (!is.character(packages$total)) {
         stop("The total slot is not a character vector.")
     }
 
     stopifnot(check_parts_and_total(x))
 
-    if (is.null(x$available_packages)) {
+    if (is.null(packages$available_packages)) {
         stop("The available_packages slot is NULL.")
     }
-    if (!is.matrix(x$available_packages)) {
+    if (!is.matrix(packages$available_packages)) {
         stop("The available_packages slot is not a matrix.")
     }
     if (is.null(x$settings)) {
@@ -42,7 +45,19 @@ check_vp_object <- function(x) {
     return(TRUE)
 }
 
-check_packages_vector <- function(x) {
+check_packages_vector <- function(x, type) {
+
+    if (type == "main") {
+        x <- x$packages$main
+    } else if (type == "total") {
+        x <- x$packages$total
+    } else if (type == "deps") {
+        x <- unlist(x$packages$deps)
+    } else if (type == "pruned") {
+        x <- x$packages$pruned
+    } else {
+        stop("type is not 'main' or 'total'.")
+    }
     if (!is.character(x)) {
         stop("x is not a character vector.")
     }
@@ -71,6 +86,9 @@ check_packages_vector <- function(x) {
 }
 
 check_available_packages <- function(x) {
+
+    x <- x$packages$available_packages
+
     if (!is.matrix(x)) {
         stop("x is not a matrix.")
     }
@@ -84,8 +102,11 @@ check_available_packages <- function(x) {
 }
 
 check_parts_and_total <- function(x) {
-    parts <- unique(c(x[["main"]], unlist(unname(x[["deps"]]))))
-    total <- unique(x[["total"]])
+
+    x <- x$packages
+
+    parts <- unique(c(x$main, unlist(unname(x$deps))))
+    total <- unique(x$total)
     if (length(parts) != length(total)) {
         stop("The sum of the main and dependencies does not equal the total.")
     }
@@ -96,49 +117,52 @@ check_parts_and_total <- function(x) {
     return(TRUE)
 }
 
-check_deps_object <- function(deps){
-    if (!is.list(deps)) {
-        stop("deps is not a list.")
+check_deps_object <- function(x){
+
+    x <- x$packages$deps
+
+    if (!is.list(x)) {
+        stop("x is not a list.")
     }
-    if (length(deps) == 0) {
-        stop("deps is an empty list.")
+    if (length(x) == 0) {
+        stop("x is an empty list.")
     }
-    if (any(duplicated(names(deps)))) {
-        stop("deps contains duplicated names.")
+    if (any(duplicated(names(x)))) {
+        stop("x contains duplicated names.")
     }
-    if (any(names(deps) == "")) {
-        stop("deps contains empty strings.")
+    if (any(names(x) == "")) {
+        stop("x contains empty strings.")
     }
-    if (any(grepl("^\\s+$", names(deps)))) {
-        stop("deps contains strings with only spaces.")
+    if (any(grepl("^\\s+$", names(x)))) {
+        stop("x contains strings with only spaces.")
     }
-    if (any(!names(deps) %in% suppressMessages(get_available_packages()))) {
-        stop("deps contains packages that are not available through any of the specified repositories.")
+    if (any(!names(x) %in% suppressMessages(get_available_packages()))) {
+        stop("x contains packages that are not available through any of the specified repositories.")
     }
-    if (any(!sapply(deps, is.character))) {
-        stop("deps contains elements that are not character vectors.")
+    if (any(!sapply(x, is.character))) {
+        stop("x contains elements that are not character vectors.")
     }
-    if (any(sapply(deps, length) == 0)) {
-        stop("deps contains elements that are empty character vectors.")
+    if (any(sapply(x, length) == 0)) {
+        stop("x contains elements that are empty character vectors.")
     }
-    if (any(sapply(deps, function(x) any(duplicated(x))))) {
-        stop("deps contains elements that are character vectors with duplicated elements.")
+    if (any(sapply(x, function(x) any(duplicated(x))))) {
+        stop("x contains elements that are character vectors with duplicated elements.")
     }
-    if (any(sapply(deps, function(x) any(x == "")))) {
-        stop("deps contains elements that are character vectors with empty strings.")
+    if (any(sapply(x, function(x) any(x == "")))) {
+        stop("x contains elements that are character vectors with empty strings.")
     }
-    if (any(sapply(deps, function(x) any(grepl("^\\s+$", x))))) {
-        stop("deps contains elements that are character vectors with strings with only spaces.")
+    if (any(sapply(x, function(x) any(grepl("^\\s+$", x))))) {
+        stop("x contains elements that are character vectors with strings with only spaces.")
     }
-    if (any(sapply(deps, function(x) any(!x %in% suppressMessages(get_available_packages()))))) {
-        stop("deps contains elements that are character vectors with packages that are not available through any of the specified repositories.")
+    if (any(sapply(x, function(x) any(!x %in% suppressMessages(get_available_packages()))))) {
+        stop("x contains elements that are character vectors with packages that are not available through any of the specified repositories.")
     }
     return(TRUE)
 }
 
 check_before_download <- function(x) {
 
-    download_vector <- x$pruned
+    download_vector <- x$packages$pruned
 
     if (is.null(download_vector)) {
         stop("The pruned vector is NULL.")
@@ -164,21 +188,17 @@ check_before_download <- function(x) {
 }
 
 assert_class <- function(x, cond) {
-
     cond <- switch(
         cond,
         "initiated" = "vpackages",
-        "main" = "vp_has_main",
-        "deps" = "vp_has_dependencies",
-        "downloaded" = "vp_is_downloaded",
-        "repository" = "vp_has_repository",
-
+        "main" = "vp_main",
+        "deps" = "vp_dependencies",
+        "downloaded" = "vp_download",
+        "repository" = "vp_repository",
+        "updated" = "vp_update",
     )
-
     if (!cond %in% class(x)) {
         stop("x does not meet the condition.")
     }
-
     return(TRUE)
-
 }

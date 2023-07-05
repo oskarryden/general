@@ -2,15 +2,16 @@
 make_vp_object <- function() {
     message("Initiating a 'vpackages' object.")
     init <- list()
-
-    # Adding slots for package names
-    init$main <- vector(mode = "character", length = 0)
-    init$deps <- list()
-    init$total <- vector(mode = "character", length = 0)
-
-    # Adding available packages
-    init$available_packages <- get_available_packages()
-    stopifnot(check_available_packages(init$available_packages))
+    
+    # Packages
+    packages <- list()
+    class(packages) <- append(x=class(packages), values="vp_packages")
+    packages$main <- vector(mode = "character", length = 0)
+    packages$deps <- list()
+    packages$total <- vector(mode = "character", length = 0)
+    packages$available_packages <- get_available_packages()
+    init$packages <- packages
+    stopifnot(check_available_packages(init))
 
     # Adding information about the R configuration
     settings <- list()
@@ -31,45 +32,36 @@ make_vp_object <- function() {
     init$settings <- settings
 
     # Add summary
-    init$summary <- list()
-    init$summary$packages <- list()
-    init$summary$download <- list()
-    init$summary$repository <- list()
+    summary <- list()
+    class(summary) <- append(x=class(summary), values="vp_summary")
+    summary$packages <- list()
+    summary$download <- list()
+    summary$repository <- list()
+    init$summary <- summary
 
     # Add class
     out <- class_vp(init)
-    # Check out
     stopifnot(check_vp_object(out))
-    message("Finished initiating a 'vpackages' object.")
+    message("Returning a vpackages object.")
     return(out)
 }
 
-# functions to add classes to the object for each stage of the process
-class_vp <- function(obj) {
-    stopifnot(!"vpackages" %in% class(obj))
-    class(obj) <- append(x=class(obj), values="vpackages")
-    return(obj)
+# functions to add classes to the vpect for each stage of the process
+class_vp <- function(vp) {
+    stopifnot(!"vpackages" %in% class(vp))
+    class(vp) <- append(x=class(vp), values="vpackages")
+    return(vp)
 }
 
-subclass_has_main <- function(obj) { 
-    stopifnot("vpackages" %in% class(obj) && !("vp_has_main" %in% class(obj)))
-    class(obj) <- append(x=class(obj), values="vp_has_main")
-    return(obj)
-}
-subclass_has_dependencies <- function(obj) {
-    stopifnot("vpackages" %in% class(obj) && !("vp_has_dependencies" %in% class(obj)))
-    class(obj) <- append(x=class(obj), values="vp_has_dependencies")
-    return(obj)
-}
-
-subclass_is_downloaded <- function(obj) {
-    stopifnot("vpackages" %in% class(obj) && !("vp_is_downloaded" %in% class(obj)))
-    class(obj) <- append(x=class(obj), values="vp_is_downloaded")
-    return(obj)
-}
-
-subclass_has_repository <- function(obj) {
-    stopifnot("vpackages" %in% class(obj) && !("vp_has_repository" %in% class(obj)))
-    class(obj) <- append(x=class(obj), values="vp_has_repository")
-    return(obj)
+subclass_vp <- function(vp, sc) {
+    sc <- switch(sc,
+        main = "vp_main",
+        dependencies = "vp_dependencies",
+        download = "vp_download",
+        repository = "vp_repository",
+        updated = "vp_updated")
+    stopifnot("vpackages" %in% class(vp) && !(sc %in% class(vp)))
+    class(vp) <- append(x=class(vp), values=sc)
+    
+    return(vp)
 }

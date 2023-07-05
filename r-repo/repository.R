@@ -4,13 +4,14 @@
 # function: make_repository
 make_repository <- function(vp) {
         
-    # Check the `vp` object.
+    # Check vp
     stopifnot(check_vp_object(vp))
     # Add class
-    vp <- timestamp_vp_class(subclass_has_repository(vp))
+    vp <- timestamp_vp_class(subclass_vp(vp, "repository"))
     # Check the `repo_type` argument.
-    repo_type <- vp$settings$R$package_type
-    repo_type <- match.arg(arg = repo_type, choices = c("source", "win.binary", "mac.binary"))
+    repo_type <- match.arg(
+        arg = vp$settings$R$package_type,
+        choices = c("source", "win.binary", "mac.binary"))
     if (!repo_type == "source") {
         stop("Only source repositories are supported at this time.")
     }
@@ -18,10 +19,8 @@ make_repository <- function(vp) {
     # Create the repository.
     tryCatch({
         message(sprintf("Creating a CRAN-style repository [%s].", repo_type))
-
         packages_directory <- vp$summary$download$directory
         message(sprintf("Using packages directory: [%s].", packages_directory))
-
         # Create the repository directory.
         repo <- gsub(
             pattern = "vpdir",
@@ -49,13 +48,11 @@ make_repository <- function(vp) {
         message(sprintf("Created the repository directory: %s", repo))
 
         # Copy packages to the repository directory.
-        message("Moving packages to the packages area.")
         file.copy(
             from = list.files(packages_directory, full.names = TRUE),
             to = file.path(repo, packages_area),
             recursive = FALSE,
             overwrite = TRUE)
-        message("Finished moving packages to the packages area.")
 
         # Create the index files using {tools::write_PACKAGES()}
         n_written <- tools::write_PACKAGES(
@@ -80,8 +77,7 @@ make_repository <- function(vp) {
 
     # Return the {vp} object.
     stopifnot(check_vp_object(vp))
-    message("Finished creating the repository.")
-    message(sprintf("Repository location: [%s].", repo))
+    message(sprintf("Finished creating repository: [%s].", repo))
     return(vp)
 }
 
