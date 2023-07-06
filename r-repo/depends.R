@@ -8,46 +8,56 @@ add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
     stopifnot(check_vp_object(vp))
     # Add class 
     vp <- timestamp_vp_class(subclass_vp(vp, "dependencies"))
-    # Check main.
-    stopifnot(check_packages_vector(vp, "main"))
-    # Check the `db` argument.
-    stopifnot(check_available_packages(vp))
-    # Check the `dependency_type` argument.
+    # Check type of dependency
     deps_type <- match.arg(
         arg = deps_type,
-        choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"),
+        choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances", "all", "most", "strong"),
         several.ok = TRUE)
+
     # Define the main dependencies
-    vp <- get_dependencies(vp, deps_type)
-    # Check dependencies
-    stopifnot(check_deps_object(vp))
+    vp <- get_dependencies(vp, which = deps_type)
+
     # Update the total packages
-    vp <- update_total_packages(vp)
+    vp <- update_packages_slot(vp, "total")
+    
     # Summarise dependencies
     vp <- summarise_packages(vp)
-    # Return vp
+    
+    # return
     stopifnot(check_vp_object(vp))
     message(sprintf("Identified [%i] net dependencies.", count_packages(vp, "deps")))
+    
     return(vp)
 }
 
-get_dependencies <- function(vp, type = deps_type) {
+get_dependencies <- function(vp, ...) {
 
-    deps <- tools::package_dependencies(
+    # Form args
+    deps_call_args <- list(
         packages = vp$packages$main,
-        db = vp$packages$available_packages,
-        which = type,
+        db = check_available_packages(get_available_packages(vp)),
+        which = "most",
         recursive = TRUE,
         reverse = FALSE)
     
-    vp$packages$deps <- deps
-    return(vp)
-}
+    # Expand dots
+    dots <- eval(substitute(alist(...)))
 
+    # Replace if dots \in deps_call_args
+    if (length(dots) > 0 & length(names(dots)) > 0) {
+        for (nm in names(deps_call_args)) {
+            if (nm %in% names(dots)) {
+                deps_call_args[[nm]] <- eval(dots[[nm]],
+                    envir = parent.frame(), enclos = parent.frame(1))
+            }
+        }
+    }
 
-update_total_packages <- function(vp) {
-    # Update the total packages
-    vp$packages$total <- sort(unique(c(vp$packages$main, unlist(unname(vp$packages$deps)))))
+    # Get dependencies
+    deps_found <- do.call(tools::package_dependencies, deps_call_args)
+    vp <- update_packages_slot(vp, "deps", updates = deps_found)
+    stopifnot(check_deps_object(vp))
+
     return(vp)
 }
 
@@ -57,7 +67,11 @@ summarise_packages <- function(vp) {
     vp$summary$packages$n_deps_per_main <- setNames(unlist(lapply(vp$packages$deps, length)), names(vp$packages$deps))
     vp$summary$packages$n_net_deps <- sum(vp$summary$packages$n_deps_per_main)
     vp$summary$packages$n_total <- count_packages(vp, "total")
-    vp$summary$packages$deps_type <- get("deps_type", envir = as.environment(parent.frame()))
+
+    if (!"vp_updated" %in% class(vp)) {
+        vp$summary$packages$deps_type <-
+            get("deps_type", envir = as.environment(parent.frame()))
+    }
 
     return(vp)
 }

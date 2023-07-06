@@ -6,9 +6,8 @@ make_repository <- function(vp) {
         
     # Check vp
     stopifnot(check_vp_object(vp))
-    # Add class
-    vp <- timestamp_vp_class(subclass_vp(vp, "repository"))
-    # Check the `repo_type` argument.
+
+    # Check repo
     repo_type <- match.arg(
         arg = vp$settings$R$package_type,
         choices = c("source", "win.binary", "mac.binary"))
@@ -18,41 +17,55 @@ make_repository <- function(vp) {
 
     # Create the repository.
     tryCatch({
-        message(sprintf("Creating a CRAN-style repository [%s].", repo_type))
-        packages_directory <- vp$summary$download$directory
-        message(sprintf("Using packages directory: [%s].", packages_directory))
-        # Create the repository directory.
-        repo <- gsub(
-            pattern = "vpdir",
-            replacement = "vprepo",
-            fixed = TRUE,
-            x = packages_directory)
 
-        # Decide extensions for the packages area
-        packages_area <- switch(
-            repo_type,
-            source = file.path("R", "src", "contrib"),
-            win.binary = file.path("bin", "windows", "contrib",
-                sprintf("%s.%s", R.version$major, substr(R.version$minor, 1, 1))),
-            mac.binary = file.path("bin", "macosx", "contrib",
-                sprintf("%s.%s", R.version$major, substr(R.version$minor, 1, 1)))
-            )
+        if (!"vp_updated" %in% class(vp)) {
+            
+            # Add class
+            vp <- timestamp_vp_class(subclass_vp(vp, "repository"))
+            message(sprintf("Creating a CRAN-style repository [%s].", repo_type))
+            message(sprintf("Using packages directory: [%s].", vp$summary$download$directory))
+            # Create the repository directory.
+            repo <- gsub(
+                pattern = "vpdir",
+                replacement = "vprepo",
+                fixed = TRUE,
+                x = vp$summary$download$directory)
 
-        if (dir.exists(repo)) {
-            stop(sprintf("This exact directory already exists: %s", repo))
+            # Decide extensions for the packages area
+            packages_area <- switch(
+                repo_type,
+                source = file.path("R", "src", "contrib"),
+                win.binary = file.path("bin", "windows", "contrib",
+                    sprintf("%s.%s", R.version$major, substr(R.version$minor, 1, 1))),
+                mac.binary = file.path("bin", "macosx", "contrib",
+                    sprintf("%s.%s", R.version$major, substr(R.version$minor, 1, 1)))
+                )
+
+            if (dir.exists(repo)) {
+                stop(sprintf("This exact directory already exists: %s", repo))
+            }
+            dir.create(
+                path = file.path(repo, packages_area),
+                recursive = TRUE,
+                showWarnings = TRUE)
+            message(sprintf("Created the repository directory: %s", repo))
+
         }
-        dir.create(
-            path = file.path(repo, packages_area),
-            recursive = TRUE,
-            showWarnings = TRUE)
-        message(sprintf("Created the repository directory: %s", repo))
+        
+        if ("vp_updated" %in% class(vp)) {
+            repo <- vp$summary$download$directory
+            message(sprintf("Using the existing repository directory: [%s].", repo))
+            repo <- vp$summary$repository$repo
+            packages_area <-  vp$summary$repository$packages_area
+
+        }
 
         # Copy packages to the repository directory.
         file.copy(
-            from = list.files(packages_directory, full.names = TRUE),
+            from = list.files(vp$summary$download$directory, full.names = TRUE),
             to = file.path(repo, packages_area),
             recursive = FALSE,
-            overwrite = TRUE)
+            overwrite = FALSE)
 
         # Create the index files using {tools::write_PACKAGES()}
         n_written <- tools::write_PACKAGES(
@@ -77,7 +90,7 @@ make_repository <- function(vp) {
 
     # Return the {vp} object.
     stopifnot(check_vp_object(vp))
-    message(sprintf("Finished creating repository: [%s].", repo))
+    message(sprintf("Finished with repository: [%s].", repo))
     return(vp)
 }
 

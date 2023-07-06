@@ -74,25 +74,33 @@ add_main_packages(make_vp_object(), "ggplot2")
 add_main_packages(make_vp_object(), "fake_package")
 add_main_packages(make_vp_object(), c("rstan", "dplyr"))
 
+f <- function(...) {
+    dots <- eval(substitute(alist(...)))
+    return(dots)
+}
+
 # ------------------------------------------------------------------------------
 # Checkpoint the make_vp_object() + add_main_packages() functions.
 # Create an object from the two functions
 vpob <- make_vp_object()
 str(vpob)
 
-vpob_main <- add_main_packages(vpob, c("data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
+vpob_main <- add_main_packages(
+    vp = vpob,
+    packages = c("data.table", "DBI", "rstan", "ggplot2", "dplyr", "zoo"))
 str(vpob_main)
-vpob$packages$deps_type
 
 vpob_deps <- add_main_dependencies(vpob_main)
 str(vpob_deps)
 
 vpob_downloaded <- download_packages(vpob_deps)
 str(vpob_downloaded)
-class(vpob_downloaded)
 
 vpob_repository <- make_repository(vpob_downloaded)
 str(vpob_repository)
-class(vpob_repository)
+vpob_repository$packages$pruned
 
-vp <- vpob_repository
+updates <- c("abind", "lme4", "lattice", "posterior")
+vpob_updated <- update_repository(vpob_repository, updates)
+
+vpob_tot_update <- update_repository(vpob_updated)

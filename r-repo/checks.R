@@ -29,12 +29,6 @@ check_vp_object <- function(x) {
 
     stopifnot(check_parts_and_total(x))
 
-    if (is.null(packages$available_packages)) {
-        stop("The available_packages slot is NULL.")
-    }
-    if (!is.matrix(packages$available_packages)) {
-        stop("The available_packages slot is not a matrix.")
-    }
     if (is.null(x$settings)) {
         stop("The settings slot is NULL.")
     }
@@ -87,8 +81,6 @@ check_packages_vector <- function(x, type) {
 
 check_available_packages <- function(x) {
 
-    x <- x$packages$available_packages
-
     if (!is.matrix(x)) {
         stop("x is not a matrix.")
     }
@@ -98,7 +90,8 @@ check_available_packages <- function(x) {
     if (!all(c("Package", "Version", "Repository", "Priority", "Depends", "Imports", "Suggests", "Enhances") %in% colnames(x))) {
         stop("x is lacking important columns.")
     }
-    return(TRUE)
+    
+    return(x)
 }
 
 check_parts_and_total <- function(x) {

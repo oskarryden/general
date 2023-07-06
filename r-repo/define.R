@@ -1,5 +1,5 @@
 # function: add_main_packages
-add_main_packages <- function(vp, packages, repos) {
+add_main_packages <- function(vp, packages) {
 
     # Check the `vp` object.
     stopifnot(check_vp_object(vp))
@@ -13,14 +13,15 @@ add_main_packages <- function(vp, packages, repos) {
     }
 
     # Add packages to main slot
-    vp$packages$main <- sort(append(x = vp$packages$main, values = packages))
+    vp <- update_packages_slot(vp, "main", updates = packages)
+    stopifnot(check_packages_vector(vp, "main"))
 
     # Add packages to total slot
-    vp$packages$total <- sort(append(x = vp$packages$total, values = packages))
+    vp <- update_packages_slot(vp, "total")
+    stopifnot(check_packages_vector(vp, "total"))
 
     # Return updated object
     stopifnot(check_vp_object(vp))
-    check_packages_vector(vp, "main")
     message("Finished adding main packages.")
     return(vp)
 }

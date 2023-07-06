@@ -18,10 +18,53 @@ get_base_r_packages <- function(){
     sort(rownames(installed.packages(priority="base")))
 }
 
-
 read_vp_object <- function(path) {
     vp <- readRDS(path)
     stopifnot(check_vp_object(vp))
+    return(vp)
+}
+
+update_packages_slot <- function(vp, slot, ...) {
+
+    slot <- match.arg(slot, c("main", "deps", "total"))
+    dots <- eval(substitute(alist(...)))
+
+    if (slot == "main") {
+        values <- eval(dots[["updates"]],
+            envir = parent.frame(),
+            enclos = parent.frame(1))
+
+        stopifnot(is.character(values))
+
+        vp$packages$main <- sort(unique(append(
+            x = vp$packages$main, values = values)))
+    }
+    if (slot == "deps") {
+
+        values <- eval(dots[["updates"]],
+            envir = parent.frame(),
+            enclos = parent.frame(2))
+
+        stopifnot("list" %in% class(values))
+
+        if (length(vp$packages$deps) == 0 & !("vp_updated" %in% class(vp))) {
+            vp$packages$deps <- values
+        } else {
+            for (nm in names(values)) {
+                    vp$packages$deps[[nm]] <- values[[nm]]
+            }
+        }
+    }
+
+    if (slot == "total") {
+        if (!is.null(dots[["updates"]])) {
+            message("Input to updates is disregarded")
+        }
+        vp$packages$total <- sort(unique(append(
+            x = vp$packages$total,
+            values = c(vp$packages$main, unlist(unname(vp$packages$deps))))))
+    }
+
     return(vp)
 }
 
@@ -55,10 +98,10 @@ get_available_packages <- function(vp) {
     # Check vp
     if (!missing(vp)) {
         stopifnot(check_vp_object(vp))
-        message("Using the available packages from the vp object.")
+        message("Using repositories defined by the vp object.")
         repos <- vp$settings$R$repositories
     } else {
-        message("Using the available packages from the R repositories.")
+        message("Using repositories from options'.")
         stopifnot(`Specify repos through options`= !is.null(getOption("repos")))
         repos <- getOption("repos")
     }
@@ -80,12 +123,6 @@ get_available_packages <- function(vp) {
     }
     
     return(cran_packages)
-}
-
-replace_available_packages <- function(vp, new) {
-    stopifnot(check_vp_object(vp))
-    vp$packages$available_packages <- new
-    return(vp)
 }
 
 count_packages <- function(vp, type) {
@@ -114,3 +151,13 @@ show_package_description <- function(package, library) {
     doc[names(doc) %in% fields]
 }
 
+compare_across_rows <- function(df, expr) {
+    # Capture as base for the call
+    .basecall <- bquote(.(substitute(expr)))
+    out <- vector(mode = "logical", length = nrow(df))
+    # Apply base call to each row
+    for (i in seq_along(out)) {
+        out[i] <- eval(.basecall, envir = df[i, , drop = FALSE])
+    }
+    return(out)
+} 

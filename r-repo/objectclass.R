@@ -9,9 +9,8 @@ make_vp_object <- function() {
     packages$main <- vector(mode = "character", length = 0)
     packages$deps <- list()
     packages$total <- vector(mode = "character", length = 0)
-    packages$available_packages <- get_available_packages()
+    #packages$available_packages <- get_available_packages()
     init$packages <- packages
-    stopifnot(check_available_packages(init))
 
     # Adding information about the R configuration
     settings <- list()
@@ -60,6 +59,13 @@ subclass_vp <- function(vp, sc) {
         download = "vp_download",
         repository = "vp_repository",
         updated = "vp_updated")
+    
+    if (sc == "vp_updated") {
+        stopifnot("vp_repository" %in% class(vp))
+        class(vp) <- append(x=class(vp), values=sc)
+        return(vp)
+    }
+
     stopifnot("vpackages" %in% class(vp) && !(sc %in% class(vp)))
     class(vp) <- append(x=class(vp), values=sc)
     
