@@ -24,20 +24,18 @@ download_packages <- function(vp, package_type) {
 
         # Summarise the download
         vp <- summarise_download(vp)
-
-        message(sprintf("Package type: [%s].", vp$settings$R$package_type))
-        message(sprintf("Repositories used: [%s].", toString(vp$settings$R$repositories)))
         
         # Download the packages.
         stopifnot(check_before_download(vp))
         cat("\n")
         get_packages(vp)
         message(sprintf("Downloaded [%i] packages.", count_packages(vp, "pruned")))
+        message(sprintf("Repositories used: [%s].", toString(vp$settings$R$repositories)))
         message(sprintf("Directory used: [%s].", vp$summary$download$directory))
     
     },  error = function(e) {
-            message("An error occurred. Removing the directory.")
             unlink(directory_path, recursive = TRUE)
+            message("Removing the directory.")
             stop(e)
     })
     # Return
@@ -48,7 +46,7 @@ download_packages <- function(vp, package_type) {
 get_packages <- function(vp, ...) {
 
     # Form args
-    dp_call_args <- list(
+    do_call_args <- list(
         pkgs = vp$packages$pruned,
         destdir = vp$summary$download$directory,
         type = vp$settings$R$package_type,
@@ -56,24 +54,24 @@ get_packages <- function(vp, ...) {
         method = "libcurl"
         )
     
+    if (...length() > 0 & !is.null(...names())) {
     # Expand dots
-    dots <- eval(substitute(alist(...)))
-
+        dots <- list(...)
+        if (length(dots) != length(names(dots))) {
+            stop("Unnamed arguments in ...")
+        }
     # Replace if dots \in deps_call_args
-    if (length(dots) > 0 & length(names(dots)) > 0) {
-        for (nm in names(dp_call_args)) {
+        for (nm in names(do_call_args)) {
             if (nm %in% names(dots)) {
-                dp_call_args[[nm]] <- eval(dots[[nm]],
-                    envir = parent.frame(), enclos = parent.frame(1))
+                do_call_args[[nm]] <- dots[[nm]]
             }
         }
     }
 
     # Download
-    do.call(utils::download.packages, dp_call_args)
-
+    do.call(utils::download.packages, do_call_args)
+    # Return
     return(vp)
-
 }
 
 # function: create_dir
@@ -100,7 +98,6 @@ prune_total_packages <- function(vp, expr) {
 
     expr <- substitute(expr)
     stopifnot(is.call(expr))
-    message(sprintf("Pruning the total packages with: [%s].", deparse(expr)))
 
     vp$packages$pruned <- vp$packages$total[!vp$packages$total %in% eval(expr)]
     if (length(vp$packages$pruned) == 0) {
@@ -115,8 +112,9 @@ summarise_download <- function(vp) {
     vp$summary$download$n_download <- count_packages(vp, "pruned")
     
     if (!has_class(vp, "vp_updated")) {
-        vp$summary$download$directory <-
-            get("directory_path", envir = as.environment(parent.frame()) )
+        vp$summary$download$directory <- get(
+            x = "directory_path",
+            envir = as.environment(parent.frame()) )
     }
 
     return(vp)

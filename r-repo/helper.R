@@ -1,67 +1,42 @@
-# Print the R version
-print_r_version <- function() {
-    message(sprintf("R version: [%s].", getRversion()))
-}
-
-# Print the R repository
-print_r_repository <- function() {
-    message(sprintf("R repository: [%s].", toString(getOption("repos"))))
-}
-
-# Print the R library
-print_r_library <- function() {
-    message(sprintf("R library [n:%i]: [%s].",
-        length(.libPaths()), toString(.libPaths())))
-}
 
 get_base_r_packages <- function(){
     sort(rownames(installed.packages(priority="base")))
 }
 
-read_vp_object <- function(path) {
-    vp <- readRDS(path)
-    return(vp)
-}
-
 update_packages_slot <- function(vp, slot, ...) {
 
     slot <- match.arg(slot, c("main", "deps", "total"))
-    dots <- eval(substitute(alist(...)))
+    # Force evaluate to avoid NSE-trap
+    # If eval+substitute+alist is used, you need to pair the correct frame as enclose
+    dots <- list(...)
 
     if (slot == "main") {
-        values <- eval(dots[["updates"]],
-            envir = parent.frame(),
-            enclos = parent.frame(1))
-
+        values <- dots[["updates"]]
+        # values is a vector
         stopifnot(is.character(values))
-
-        vp$packages$main <- sort(unique(append(
-            x = vp$packages$main, values = values)))
+        vp$packages$main <- sort(unique(c(vp$packages$main, values)))
     }
     if (slot == "deps") {
-
-        values <- eval(dots[["updates"]],
-            envir = parent.frame(),
-            enclos = parent.frame(2))
-
+        values <- dots[["updates"]]
+        # values is a list
         stopifnot("list" %in% class(values))
-
-        if (length(vp$packages$deps) == 0 & !("vp_updated" %in% class(vp))) {
+        if (length(vp$packages$deps) == 0 & !has_class(vp, "vp_updated")) {
             vp$packages$deps <- values
         } else {
             for (nm in names(values)) {
-                    vp$packages$deps[[nm]] <- values[[nm]]
+                # add parent package
+                vp$packages$deps[[nm]] <- values[[nm]]
             }
         }
     }
 
     if (slot == "total") {
         if (!is.null(dots[["updates"]])) {
-            message("Input to updates is disregarded")
+            warning("Input to function is disregarded")
         }
-        vp$packages$total <- sort(unique(append(
-            x = vp$packages$total,
-            values = c(vp$packages$main, unlist(unname(vp$packages$deps))))))
+        vp$packages$total <- sort(unique(c(
+            vp$packages$total,
+            c(vp$packages$main, unlist(unname(vp$packages$deps))))))
     }
 
     return(vp)
@@ -88,14 +63,12 @@ get_available_packages <- function(vp) {
 
     # Check filters
     if (is.null(getOption("available_packages_filters"))) {
-        warning("No filters for packages are set.")
-        message("Consider setting filters using `options(available_packages_filters = c(\"R_version\", \"OS_type\", \"subarch\", \"CRAN\", \"duplicates\"))` before running `get_available_packages`.")
+        warning("Consider setting filters using `options(available_packages_filters = c(\"R_version\", \"OS_type\", \"subarch\", \"CRAN\", \"duplicates\"))` before running `get_available_packages`.")
     } else {
-        message("Filters for packages are set.")
-        message(sprintf("Filters: [%s].", toString(getOption("available_packages_filters"))))
+        message(sprintf("Filters used: [%s].",
+            toString(getOption("available_packages_filters"))))
     }
 
-    # Check vp
     if (!missing(vp)) {
         message("Using repositories defined by the vp object.")
         repos <- vp$settings$R$repositories
@@ -106,13 +79,11 @@ get_available_packages <- function(vp) {
     }
 
     # Get all packages from {repo_name} available in {repos} with {filters}
-    message(sprintf("Repos used: [%s].", toString(repos)))
     cran_packages <- utils::available.packages(
         repos = repos,
-        filters = getOption("available_packages_filters")
-        )
+        filters = getOption("available_packages_filters"))
 
-    # Functionality for {add_main_packages}
+    # Unique behavior for {add_main_packages}
     call_stack <- sys.calls()
     # Get the function that called get_available_packages
     calling_function <- substitute(deparse(call_stack[[length(call_stack) - 1]][[1]]))
@@ -140,7 +111,6 @@ count_packages <- function(vp, type) {
 }
 
 show_package_description <- function(package, library) {
-
     if (missing(library)) {
         library <- .libPaths()[1]
     }
@@ -159,4 +129,4 @@ compare_across_rows <- function(df, expr) {
         out[i] <- eval(basecall, envir = df[i, , drop = FALSE])
     }
     return(out)
-} 
+}

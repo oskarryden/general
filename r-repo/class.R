@@ -1,4 +1,4 @@
-# functions to add classes
+# functions to add classe
 add_class <- function(x, new_class) {
     
     if (missing(new_class)) stop("Empty class")
@@ -37,17 +37,15 @@ is_vp <- function(x) {
 
 class_table <- function() {
 
-    classes <- c(
-        "vpackages",
-        paste0("vp_",
-            c("main", "dependencies", "download", "repository", "updated")))
+    classes <- c("vpackages", paste0("vp_", c(
+        "main", "dependencies", "download", "repository", "updated")))
 
-    d <- data.frame(
+    out <- data.frame(
         classes = classes,
         pre_class = c(NA_character_, classes[seq(1, length(classes)) - 1 ])
     )
 
-    return(d)
+    return(out)
 }
 
 has_pre_class <- function(x, focal) {

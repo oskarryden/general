@@ -19,7 +19,6 @@ make_repository <- function(vp) {
             
             # Add class
             vp <- timestamp_class(add_class(vp, "vp_repository"))
-            message("Creating a CRAN-style repository.")
             
             # Create the repository directory.
             repo <- gsub(
@@ -44,22 +43,17 @@ make_repository <- function(vp) {
                 path = file.path(repo, packages_area),
                 recursive = TRUE,
                 showWarnings = TRUE)
-            message(sprintf("Repository created: [%s]", repo))
-
         }
         
         if (has_class(vp, "vp_updated")) {
             repo <- vp$summary$repository$repo
             packages_area <-  vp$summary$repository$packages_area
-            message(sprintf("Using existing repository: [%s].", repo))
         }
 
         # Repository
         repo_packages_area <- file.path(repo, packages_area)
 
         # Copy packages to the repository directory.
-        message(sprintf("Packages are copied from: [%s].",
-            vp$summary$download$directory))
         file.copy(
             from = list.files(vp$summary$download$directory, full.names = TRUE),
             to = repo_packages_area,
@@ -75,13 +69,13 @@ make_repository <- function(vp) {
             validate = TRUE,
             verbose = TRUE)
         
-        message(
-            sprintf("Repository contains [%i] packages, expected number is: [%i]",
-                n_written, vp$summary$download$n_download))
+        message(sprintf(
+            "Repository [%s] contains [%i] packages, expected number is: [%i]",
+                repo, n_written, vp$summary$download$n_download))
 
     }, error = function(e) {
-            message("An error occurred. Removing the directory.")
             unlink(file.path(repo), recursive = TRUE)
+            message("Removing the directory.")
             stop(e)
     })
 

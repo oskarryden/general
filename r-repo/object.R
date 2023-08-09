@@ -6,6 +6,7 @@ create_vp_object <- function() {
     packages$main <- vector(mode = "character", length = 0)
     packages$deps <- list()
     packages$total <- vector(mode = "character", length = 0)
+
     # Adding information about the R configuration
     settings <- add_class(list(), "vp_settings")
     # R
@@ -20,11 +21,13 @@ create_vp_object <- function() {
     # General
     settings$general <- list()
     settings$general$start_date <- Sys.Date()
+    
     # Summary
     summary <- add_class(list(), "vp_summary")
     summary$packages <- list()
     summary$download <- list()
     summary$repository <- list()
+    
     # Out object
     out <- add_class(list(), "vpackages")
     out$packages <- packages

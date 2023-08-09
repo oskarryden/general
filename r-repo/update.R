@@ -9,18 +9,15 @@ update_repository <- function(vp, packages) {
 
     if (missing(packages)) {
         packages <- vp$packages$pruned
-        message("Packages argument is missing...")
-        message("Updating previously downloaded packages.")
+        message("As packages argument is missing, updating all packages.")
     }
     
     updates_outcome <- find_updates(vp, packages)
 
-    # No updates found
-    if (length(updates_outcome) == 1) {
-        if (updates_outcome == -1) {
+    # No updates found: -1 is symbolic for nothing to update
+    if (length(updates_outcome) == 1 & updates_outcome == -1) {
             message("No updates found.")
             return(vp)
-        }
     }
 
     # Updates found
@@ -29,10 +26,10 @@ update_repository <- function(vp, packages) {
     vp <- update_packages_slot(vp, "total")
 
     # Get new dependencies
-    vp <- get_dependencies(
+    vp <- suppressMessages(get_dependencies(
         vp,
         packages = updates_outcome,
-        which = vp$summary$packages$deps_type)
+        which = vp$summary$packages$deps_type))
     message(sprintf("Identified [%i] net dependencies.",
         count_packages(vp, "deps")))
 
@@ -53,8 +50,7 @@ update_repository <- function(vp, packages) {
         expr = get_base_r_packages())
     vp <- get_packages(vp, pkgs = updates_to_download)
 
-    message(sprintf("Downloaded [%i] new packages.", length(updates_to_download)))
-    message(sprintf("Directory used [%s].", vp$summary$download$directory))
+    message(sprintf("Updated/downloaded [%i] new packages.", length(updates_to_download)))
 
     # Update the repository
     vp <- make_repository(vp)
@@ -63,7 +59,6 @@ update_repository <- function(vp, packages) {
 }
 
 find_updates <- function(vp, packages) {
-    
     # State variables to keep
     state_vars <- c("Package", "Version", "MD5sum")
     # State of the vp-repository
@@ -74,15 +69,16 @@ find_updates <- function(vp, packages) {
     merged_states <- merge_states(current_state, remotes_state)
     # Filter the states
     filtered_states <- filter_state(merged_states, packages)
-    # Compare the states
+    # Compare the states: return -1 for no updates
     compared_states <- compare_states(filtered_states)
 
     # Condition for no updates
-    if (length(compared_states) == 1) {
+    if (length(compared_states) == 1 & is.vector(compared_states)) {
         if (compared_states == -1) {
             return(-1)
-        } 
+        }
     }
+
     # Condition for possible updates
     if (nrow(compared_states) > 0) {
         out <- compared_states$Package
@@ -93,11 +89,11 @@ find_updates <- function(vp, packages) {
 get_repository_path <- function(vp) {
     x <- Filter(f = \(s) is.character(s),  x = vp$summary$repository)
     x <- x[names(x) %in% c("repo", "packages_area")]
-    .call <- call("file.path")
+    call_ <- call("file.path")
     for (i in seq_along(x)) {
-        .call[[i+1]] <- x[[i]] 
+        call_[[i+1]] <- x[[i]] 
     }
-    return(eval(.call))
+    return(eval(call_))
 }
 
 get_repository_PACKAGES <- function(vp) {
@@ -128,24 +124,24 @@ filter_state <- function(state, packages) {
 }
 
 compare_states <- function(state) {
-    
-    # Compare the states
+
     version <- compare_package_version(state)
     MD5 <- compare_package_MD5sum(state)
 
     if (length(version) == 1 & length(MD5) == 1) {
-        # Return 0 for nothing to update
         if (version == -1 & MD5 == -1) {
             return(-1)
         }
     }
 
     if (length(version) >= 1 & length(MD5) >= 1) {
-        out <- state[!version | !MD5, ]
-        return(out)
+        if (is.logical(version) & is.logical(MD5)) {
+            out <- state[!version | !MD5, ]
+            return(out)
+        }
     }
 
-    message("Something went wrong.")
+    stop("Comparison not working as intended.")
 }
 
 compare_package_MD5sum <- function(state) {
@@ -202,5 +198,5 @@ subset_to_update <- function(vp, updates, expr) {
 }
 
 # function to check if there are later versions to install
-
+# find_updates()?
 
