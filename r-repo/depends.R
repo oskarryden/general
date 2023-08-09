@@ -4,14 +4,15 @@
 # function: add_main_dependencies
 add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
 
-    # Check the `vp` object.
-    stopifnot(check_vp_object(vp))
+    # Check
+
     # Add class 
-    vp <- timestamp_vp_class(subclass_vp(vp, "dependencies"))
+    vp <- timestamp_class(add_class(vp, "vp_dependencies"))
     # Check type of dependency
     deps_type <- match.arg(
         arg = deps_type,
-        choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances", "all", "most", "strong"),
+        choices = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances",
+            "all", "most", "strong"),
         several.ok = TRUE)
 
     # Define the main dependencies
@@ -24,7 +25,6 @@ add_main_dependencies <- function(vp, deps_type = c("Depends","Imports")) {
     vp <- summarise_packages(vp)
     
     # return
-    stopifnot(check_vp_object(vp))
     message(sprintf("Identified [%i] net dependencies.", count_packages(vp, "deps")))
     
     return(vp)
@@ -56,7 +56,6 @@ get_dependencies <- function(vp, ...) {
     # Get dependencies
     deps_found <- do.call(tools::package_dependencies, deps_call_args)
     vp <- update_packages_slot(vp, "deps", updates = deps_found)
-    stopifnot(check_deps_object(vp))
 
     return(vp)
 }

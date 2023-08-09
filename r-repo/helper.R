@@ -20,7 +20,6 @@ get_base_r_packages <- function(){
 
 read_vp_object <- function(path) {
     vp <- readRDS(path)
-    stopifnot(check_vp_object(vp))
     return(vp)
 }
 
@@ -68,20 +67,21 @@ update_packages_slot <- function(vp, slot, ...) {
     return(vp)
 }
 
-timestamp_vp_class <- function(obj) {
-    latest_class <- unlist(strsplit(x = class(obj)[length(class(obj))], split = "_"))
+timestamp_class <- function(vp) {
+
+    latest_class <- unlist(strsplit(x = class(vp)[length(class(vp))], split = "_"))
     stopifnot(is.character(latest_class) && is.vector(latest_class))
     if (latest_class[2] == "vpackages") {
-        stop("The object is already timestamped")
+        stop("Already timestamped")
     }
     latest_class <- latest_class[length(latest_class)]
-    if (is.null(obj$settings$general[[latest_class]])) {
-        obj$settings$general[[latest_class]] <- Sys.Date()
+    if (is.null(vp$settings$general[[latest_class]])) {
+        vp$settings$general[[latest_class]] <- Sys.Date()
     } else {
-        obj$settings$general[[latest_class]] <-
-            c(obj$settings$general[[latest_class]], Sys.Date())
+        vp$settings$general[[latest_class]] <-
+            c(vp$settings$general[[latest_class]], Sys.Date())
     }
-    return(obj)
+    return(vp)
 }
 
 get_available_packages <- function(vp) {
@@ -97,7 +97,6 @@ get_available_packages <- function(vp) {
 
     # Check vp
     if (!missing(vp)) {
-        stopifnot(check_vp_object(vp))
         message("Using repositories defined by the vp object.")
         repos <- vp$settings$R$repositories
     } else {
@@ -153,11 +152,11 @@ show_package_description <- function(package, library) {
 
 compare_across_rows <- function(df, expr) {
     # Capture as base for the call
-    .basecall <- bquote(.(substitute(expr)))
+    basecall <- bquote(.(substitute(expr)))
     out <- vector(mode = "logical", length = nrow(df))
     # Apply base call to each row
     for (i in seq_along(out)) {
-        out[i] <- eval(.basecall, envir = df[i, , drop = FALSE])
+        out[i] <- eval(basecall, envir = df[i, , drop = FALSE])
     }
     return(out)
 } 

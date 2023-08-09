@@ -4,10 +4,8 @@
 # function: download_packages
 download_packages <- function(vp, package_type) {
     
-    # Check the `vp` object.
-    stopifnot(check_vp_object(vp))
     # Add class
-    vp <- timestamp_vp_class(subclass_vp(vp, "download"))
+    vp <- timestamp_class(add_class(vp, "vp_download"))
     # Create the download directory.
     directory_path <- create_dir(vp)
 
@@ -17,7 +15,9 @@ download_packages <- function(vp, package_type) {
             package_type <- getOption("pkgType")
         }
 
-        vp$settings$R$package_type <- match.arg(arg = package_type, choices = c("source", "win.binary", "mac.binary")) 
+        vp$settings$R$package_type <- match.arg(
+            arg = package_type,
+            choices = c("source", "win.binary", "mac.binary")) 
             
         # Prune the vp object for base R packages
         vp <- prune_total_packages(vp, expr = get_base_r_packages())
@@ -25,14 +25,15 @@ download_packages <- function(vp, package_type) {
         # Summarise the download
         vp <- summarise_download(vp)
 
-        message(sprintf("Using package type: [%s].", vp$settings$R$package_type))
-        message(sprintf("Downloading from: [%s].", toString(vp$settings$R$repositories)))
+        message(sprintf("Package type: [%s].", vp$settings$R$package_type))
+        message(sprintf("Repositories used: [%s].", toString(vp$settings$R$repositories)))
+        
         # Download the packages.
         stopifnot(check_before_download(vp))
         cat("\n")
         get_packages(vp)
-        message(sprintf("Done with downloading [%i] 'pruned' packages.", count_packages(vp, "pruned")))
-        message(sprintf("Packages are in [%s].", vp$summary$download$directory))
+        message(sprintf("Downloaded [%i] packages.", count_packages(vp, "pruned")))
+        message(sprintf("Directory used: [%s].", vp$summary$download$directory))
     
     },  error = function(e) {
             message("An error occurred. Removing the directory.")
@@ -40,7 +41,6 @@ download_packages <- function(vp, package_type) {
             stop(e)
     })
     # Return
-    stopifnot(check_vp_object(vp))
     return(vp)
 }
 
@@ -80,18 +80,18 @@ get_packages <- function(vp, ...) {
 # note: strict function that is quite decisive in what it does.
 create_dir <- function(vp) {
 
-    if ("vp_updated" %in% class(vp)) {
+    if (has_class(vp, "vp_updated")) {
         dir <- vp$summary$download$directory
         stopifnot(dir.exists(dir))
         return(dir)
     }
     
-    dir <- file.path("~", paste0(".vpdir-", Sys.Date()))
+    dir <- file.path("~", paste0("vpdir-", Sys.Date()))
     if (dir.exists(dir)) {
         stop(sprintf("This exact directory already exists: %s", dir))
     }
+
     dir.create(dir, recursive = FALSE, showWarnings = TRUE)
-    message(sprintf("Created directory: %s", dir))
 
     return(dir)
 }
@@ -114,7 +114,7 @@ summarise_download <- function(vp) {
     
     vp$summary$download$n_download <- count_packages(vp, "pruned")
     
-    if (!"vp_updated" %in% class(vp)) {
+    if (!has_class(vp, "vp_updated")) {
         vp$summary$download$directory <-
             get("directory_path", envir = as.environment(parent.frame()) )
     }

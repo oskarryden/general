@@ -1,13 +1,19 @@
 check_vp_object <- function(x) {
 
-    packages <- x$packages
-
-    if (!"vpackages" %in% class(x)) {
+    # Top-level check
+    if (!is_vp(x)) {
         stop("x is not a 'vpackages' object.")
     }
     if (!"list" %in% class(x)) {
         stop("x is not a list.")
     }
+    
+    # Package-level checks
+    packages <- x$packages
+
+    stopifnot(has_class(packages, "vp_packages"))
+    stopifnot(main_and_deps_equal_to_total(packages))
+
     if (is.null(packages$main)) {
         stop("The main slot is NULL.")
     }
@@ -26,9 +32,6 @@ check_vp_object <- function(x) {
     if (!is.character(packages$total)) {
         stop("The total slot is not a character vector.")
     }
-
-    stopifnot(check_parts_and_total(x))
-
     if (is.null(x$settings)) {
         stop("The settings slot is NULL.")
     }
@@ -50,8 +53,9 @@ check_packages_vector <- function(x, type) {
     } else if (type == "pruned") {
         x <- x$packages$pruned
     } else {
-        stop("type is not 'main' or 'total'.")
+        stop("Specified type is not defined.")
     }
+
     if (!is.character(x)) {
         stop("x is not a character vector.")
     }
@@ -94,12 +98,11 @@ check_available_packages <- function(x) {
     return(x)
 }
 
-check_parts_and_total <- function(x) {
-
-    x <- x$packages
+main_and_deps_equal_to_total <- function(x) {
 
     parts <- unique(c(x$main, unlist(unname(x$deps))))
     total <- unique(x$total)
+    
     if (length(parts) != length(total)) {
         stop("The sum of the main and dependencies does not equal the total.")
     }
@@ -177,21 +180,5 @@ check_before_download <- function(x) {
         stop("The download directory does not exist.")
     }
 
-    return(TRUE)
-}
-
-assert_class <- function(x, cond) {
-    cond <- switch(
-        cond,
-        "initiated" = "vpackages",
-        "main" = "vp_main",
-        "deps" = "vp_dependencies",
-        "downloaded" = "vp_download",
-        "repository" = "vp_repository",
-        "updated" = "vp_update",
-    )
-    if (!cond %in% class(x)) {
-        stop("x does not meet the condition.")
-    }
     return(TRUE)
 }

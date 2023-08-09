@@ -3,28 +3,28 @@
 # update repository
 update_repository <- function(vp, packages) {
     
-    stopifnot(check_vp_object(vp))
-    stopifnot(assert_class(vp, "downloaded"))
-    stopifnot(assert_class(vp, "repository"))
-    vp <- timestamp_vp_class(subclass_vp(vp, "updated"))
+    stopifnot(has_class(vp, "vp_download"))
+    stopifnot(has_class(vp, "vp_repository"))
+    vp <- timestamp_class(add_class(vp, "vp_updated"))
 
     if (missing(packages)) {
         packages <- vp$packages$pruned
-        message("Looking for updates among the previously downloaded packages.")
+        message("Packages argument is missing...")
+        message("Updating previously downloaded packages.")
     }
     
     updates_outcome <- find_updates(vp, packages)
 
     # No updates found
     if (length(updates_outcome) == 1) {
-        if (updates_outcome == 0) {
+        if (updates_outcome == -1) {
             message("No updates found.")
             return(vp)
         }
     }
 
     # Updates found
-    message(sprintf("Found [%i] updates.", length(updates_outcome)))
+    message(sprintf("Updating [%i] packages.", length(updates_outcome)))
     vp <- update_packages_slot(vp, "main", updates = updates_outcome)
     vp <- update_packages_slot(vp, "total")
 
@@ -33,14 +33,14 @@ update_repository <- function(vp, packages) {
         vp,
         packages = updates_outcome,
         which = vp$summary$packages$deps_type)
-    message(sprintf("Identified [%i] net dependencies.", count_packages(vp, "deps")))
+    message(sprintf("Identified [%i] net dependencies.",
+        count_packages(vp, "deps")))
 
     # Update the total packages
     vp <- update_packages_slot(vp, "total")
     
     # Summarise packages
     vp <- summarise_packages(vp)
-    stopifnot(check_vp_object(vp))
 
     # Determine the packages to download
     vp <- prune_total_packages(vp, expr = get_base_r_packages())
@@ -53,14 +53,12 @@ update_repository <- function(vp, packages) {
         expr = get_base_r_packages())
     vp <- get_packages(vp, pkgs = updates_to_download)
 
-    message(sprintf("Done with downloading [%i] updates.", length(updates_to_download)))
-    message(sprintf("Packages are in [%s].", vp$summary$download$directory))
+    message(sprintf("Downloaded [%i] new packages.", length(updates_to_download)))
+    message(sprintf("Directory used [%s].", vp$summary$download$directory))
 
     # Update the repository
     vp <- make_repository(vp)
 
-    # Return the `vp` object
-    stopifnot(check_vp_object(vp))
     return(vp)
 }
 
@@ -81,8 +79,8 @@ find_updates <- function(vp, packages) {
 
     # Condition for no updates
     if (length(compared_states) == 1) {
-        if (compared_states == 0) {
-            return(0)
+        if (compared_states == -1) {
+            return(-1)
         } 
     }
     # Condition for possible updates
@@ -130,46 +128,48 @@ filter_state <- function(state, packages) {
 }
 
 compare_states <- function(state) {
+    
     # Compare the states
     version <- compare_package_version(state)
     MD5 <- compare_package_MD5sum(state)
 
-    if (length(version) > 1 & length(MD5) > 1) {
-        out <- state[!version | !MD5, ]
-        return(out)
+    if (length(version) == 1 & length(MD5) == 1) {
+        # Return 0 for nothing to update
+        if (version == -1 & MD5 == -1) {
+            return(-1)
+        }
     }
 
-    if (version == 0 & MD5 == 0) {
-        return(0)
+    if (length(version) >= 1 & length(MD5) >= 1) {
+        out <- state[!version | !MD5, ]
+        return(out)
     }
 
     message("Something went wrong.")
 }
 
 compare_package_MD5sum <- function(state) {
+    # if identical ? TRUE : FALSE
     state_identical <- with(state, identical(MD5sum_current, MD5sum_remote))
-
     if (state_identical) {
-        return(0)
+        return(-1)
     }
 
     out <- compare_across_rows(
         df = state,
-        expr = identical(MD5sum_current, MD5sum_remote)
-        )
+        expr = identical(MD5sum_current, MD5sum_remote))
     
     return(out)
 }
 
 compare_package_version <- function(state) {
+    # if identical ? TRUE : FALSE
     state_identical <- with(state,
         identical(
             base::package_version(Version_current, strict = FALSE),
-            base::package_version(Version_remote, strict = FALSE))
-        )
-
+            base::package_version(Version_remote, strict = FALSE)))
     if (state_identical) {
-        return(0)
+        return(-1)
     }
 
     out <- compare_across_rows(
@@ -178,7 +178,6 @@ compare_package_version <- function(state) {
             base::package_version(Version_current, strict = FALSE),
             base::package_version(Version_remote, strict = FALSE))
         )
-    
     return(out)
 }
 
@@ -195,13 +194,13 @@ subset_dependencies <- function(vp, package) {
 subset_to_update <- function(vp, updates, expr) {
 
     expr <- substitute(expr); stopifnot(is.call(expr))
-
     deps <- unlist(sapply(updates, subset_dependencies, vp = vp))
     tot <- sort(unique(c(updates, deps)))
     out <- tot[!tot %in% eval(expr)]
 
     return(out)
 }
+
 # function to check if there are later versions to install
 
 
