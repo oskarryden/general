@@ -1,4 +1,4 @@
-# functions to add classe
+
 add_class <- function(x, new_class) {
     
     if (missing(new_class)) stop("Empty class")

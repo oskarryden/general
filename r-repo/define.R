@@ -1,4 +1,4 @@
-# function: add_main_packages
+
 add_main_packages <- function(vp, packages, ...) {
 
     # Add class
