@@ -139,18 +139,13 @@ pkgs.mkShell {
 ```
 
 
-
-
-
 # Useful links:
 - <a href="https://nix.dev/">The Nix Developer Manual</a>
 - <a href="https://nixos.org/manual/nix/stable/">The Nix Manual</a>
-
-
-
-# Series on R Bloggers
-# https://www.r-bloggers.com/2023/07/reproducible-data-science-with-nix/
-# https://www.r-bloggers.com/2023/07/reproducible-data-science-with-nix-part-2-running-targets-pipelines-with-nix/
-# https://www.r-bloggers.com/2023/07/reproducible-data-science-with-nix-part-3-frictionless-plumber-api-deployments-with-nix/
-# https://www.r-bloggers.com/2023/08/reproducible-data-science-with-nix-part-4-so-long-renv-and-docker-and-thanks-for-all-the-fish/
+- <a href="https://rgoswami.me/posts/nix-r-devtools/">Nix and R</a>
+- <a href="https://lazamar.github.io/download-specific-package-version-with-nix/">Finding old versions of packages</a>
+- <a href="https://www.r-bloggers.com/2023/07/reproducible-data-science-with-nix">R Bloggers part 1</a>
+- <a href="https://www.r-bloggers.com/2023/07/reproducible-data-science-with-nix-part-2-running-targets-pipelines-with-nix/">R Bloggers part 2</a>
+- <a href="https://www.r-bloggers.com/2023/07/reproducible-data-science-with-nix-part-3-frictionless-plumber-api-deployments-with-nix/">R Bloggers part 3</a>
+- <a href="https://www.r-bloggers.com/2023/08/reproducible-data-science-with-nix-part-4-so-long-renv-and-docker-and-thanks-for-all-the-fish">R Bloggers part 4</a>
 
