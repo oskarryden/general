@@ -1,4 +1,6 @@
 # Intro to Nix
+Taken from [here](https://nix.dev/tutorials/first-steps/).
+
 Nix is a package manager and a functional language that can help with creating reproducible environments. It can be ran on Linux, but also on MacOS and Windows (through WSL). 
 
 We can run nix in a few different ways:
